@@ -17,12 +17,12 @@ from keras.layers.convolutional import Convolution2D, UpSampling2D,Conv2DTranspo
 
 import trainer
 import utils
-# import sporco
-# import cv2
+import sporco
+import cv2
 # In[44]:
 
 
-epochs = 20
+epochs = 5
 batches_per_epoch = 150
 batch_size = 16
 gamma = .5 #between 0 and 1y
@@ -77,28 +77,36 @@ def expandedprewitt(inputTensor):
     inputChannels = K.reshape(K.ones_like(inputTensor[0,0,0,:]),(1,1,-1,1))
     return prewittFilter * inputChannels
 
-def gmsdLoss(yTrue,yPred):
+sobelFilter = K.variable([[[[-1.,  -1.]], [[0.,  -1.]],[[1.,  -1.]]],
+                      [[[-1.,  0.]], [[0.,  0.]],[[1.,  0.]]],
+                      [[[-1., 1.]], [[0., 1.]],[[1., 1.]]]])
+def expandedsobel(inputTensor):
+
+    inputChannels = K.reshape(K.ones_like(inputTensor[0,0,0,:]),(1,1,-1,1))
+    return sobelFilter * inputChannels
+
+# def cqsLoss(yTrue,yPred):
+
+
+def gmsmLoss(yTrue,yPred):
+    # print yTrue[:,:,:,2]
+    # print yTrue[:,:,:,1]
+    # print yTrue[:,:,:,0]
+
+
 
     filt = expandedprewitt(yTrue)
 
     prewittTrue = K.depthwise_conv2d(yTrue,filt)
     prewittPred = K.depthwise_conv2d(yPred,filt)
     filter_index=0
-    loss = K.mean(yTrue[:, :, :, filter_index])
-
-    # compute the gradient of the input picture wrt this loss
-    grad1 = K.gradients(loss, yTrue)[0]
-    grad2 = K.gradients(loss, yPred)[0]
-    # h=K.dot(grad1,grad2)
-    # print h
-    # c=0.02
-    # print (grad1*grad2*2+c)/grad1+grad2+c
-    # print res
-    # return K.std(res)
-    return K.mean(K.square(prewittTrue - prewittPred))
+    
+    C=0.02
+    return (2*K.mean(prewittTrue)*K.mean(prewittPred)+C)/(K.mean(prewittTrue)+K.mean(prewittPred)+C)
+    # return K.mean(K.square(prewittTrue - prewittPred))
 
 def hyb(yTrue,yPred):
-    a=gmsdLoss(yTrue,yPred)
+    a=gmsmLoss(yTrue,yPred)
     b=l1(yTrue,yPred)
     return (a+b)/2
 # In[48]:
@@ -177,10 +185,10 @@ if l=="l1":
     discriminator.compile(loss=l1, optimizer=adam)
     GAN.compile(loss=l1, optimizer=adam)
 
-if l=="gmsdLoss":    
-    generator.compile(loss=gmsdLoss, optimizer=adam)
-    discriminator.compile(loss=gmsdLoss, optimizer=adam)
-    GAN.compile(loss=gmsdLoss, optimizer=adam)
+if l=="gmsmLoss":    
+    generator.compile(loss=gmsmLoss, optimizer=adam)
+    discriminator.compile(loss=gmsmLoss, optimizer=adam)
+    GAN.compile(loss=gmsmLoss, optimizer=adam)
 
 if l=="hyb":    
     generator.compile(loss=hyb, optimizer=adam)
