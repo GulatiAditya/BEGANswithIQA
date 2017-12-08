@@ -22,7 +22,7 @@ import cv2
 # In[44]:
 
 
-epochs = 5
+epochs = 20
 batches_per_epoch = 150
 batch_size = 16
 gamma = .5 #between 0 and 1y
