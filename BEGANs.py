@@ -102,7 +102,7 @@ def gmsmLoss(yTrue,yPred):
     filter_index=0
     
     C=0.02
-    return (2*K.mean(prewittTrue)*K.mean(prewittPred)+C)/(K.mean(prewittTrue)+K.mean(prewittPred)+C)
+    return (2*K.abs(K.mean(prewittTrue))*K.abs(K.mean(prewittPred))+C)/K.abs((K.mean(prewittTrue))+K.abs(K.mean(prewittPred))+C)
     # return K.mean(K.square(prewittTrue - prewittPred))
 
 def hyb(yTrue,yPred):
